@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Sonshine Food Pantry - Current Inventory</title>
+</head>
+<body>
+    <h1>Sonshine Food Pantry - Current Inventory</h1>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th>Item</th>
+                <th>Unit</th>
+                <th>In Stock</th>
+                <th>Quota</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item : ${items}">
+                <td th:text="${categoryNames[item.categoryId]}"></td>
+                <td th:text="${item.name}"></td>
+                <td th:text="${item.unitLabel}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td th:text="${item.quota}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p th:if="${#lists.isEmpty(items)}">No items currently in inventory.</p>
+</body>
+</html>

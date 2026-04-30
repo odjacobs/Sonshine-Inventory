@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin - Sonshine Inventory</title>
+</head>
+<body>
+    <h1>Admin</h1>
+
+    <hr>
+
+    <h2>Categories</h2>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Display Order</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="cat : ${categories}">
+                <td th:text="${cat.id}"></td>
+                <td th:text="${cat.name}"></td>
+                <td th:text="${cat.displayOrder}"></td>
+                <td th:text="${cat.active}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Add Category</h3>
+    <form th:action="@{/admin/categories}" method="post">
+        <label>
+            Name:
+            <input type="text" name="name" required>
+        </label>
+        <button type="submit">Add Category</button>
+    </form>
+
+    <hr>
+
+    <h2>Items</h2>
+
+    <table border="1">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Category</th>
+                <th>Name</th>
+                <th>Unit</th>
+                <th>In Stock</th>
+                <th>Quota</th>
+                <th>Active</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="item : ${items}">
+                <td th:text="${item.id}"></td>
+                <td th:text="${categoryNames[item.categoryId]}"></td>
+                <td th:text="${item.name}"></td>
+                <td th:text="${item.unitLabel}"></td>
+                <td th:text="${item.quantity}"></td>
+                <td th:text="${item.quota}"></td>
+                <td th:text="${item.active}"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h3>Add Item</h3>
+    <form th:action="@{/admin/items}" method="post">
+        <label>
+            Category:
+            <select name="categoryId" required>
+                <option value="">-- Select --</option>
+                <option th:each="cat : ${categories}"
+                        th:value="${cat.id}"
+                        th:text="${cat.name}"></option>
+            </select>
+        </label>
+        <br>
+        <label>
+            Name:
+            <input type="text" name="name" required>
+        </label>
+        <br>
+        <label>
+            Unit Label:
+            <input type="text" name="unitLabel" placeholder="e.g. cans, lbs">
+        </label>
+        <br>
+        <label>
+            Initial Quantity:
+            <input type="number" name="quantity" value="0" min="0" required>
+        </label>
+        <br>
+        <label>
+            Quota:
+            <input type="number" name="quota" min="0">
+        </label>
+        <br>
+        <button type="submit">Add Item</button>
+    </form>
+</body>
+</html>

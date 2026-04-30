@@ -15,7 +15,7 @@ public class Pledge {
     }
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
 
     @Column(name = "item_id", nullable = false)
