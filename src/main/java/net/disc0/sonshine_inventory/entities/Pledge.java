@@ -11,7 +11,7 @@ public class Pledge {
         OPEN,
         FULFILLED,
         EXPIRED,
-        CANCELLED;
+        CANCELLED
     }
 
     @Id
@@ -34,9 +34,7 @@ public class Pledge {
     @Column(name = "status")
     private PledgeStatus status;
 
-    // Generate timestamp automatically in the database
-    @Column(name = "created_at", nullable = false, insertable = false)
-    @GeneratedValue
+    @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
 
     // Set to createdAt + 7 days in the application logic before saving
@@ -44,7 +42,6 @@ public class Pledge {
     private LocalDateTime expiresAt;
 
     @Column(name = "fulfilled_at", nullable = true)
-    @GeneratedValue
     private LocalDateTime fulfilledAt;
 
     public Pledge() {}
@@ -56,6 +53,13 @@ public class Pledge {
         this.quantity = quantity;
         this.status = status;
         this.expiresAt = expiresAt;
+    }
+
+    @PrePersist
+    void prePersist() {
+        if (createdAt == null) {
+            createdAt = LocalDateTime.now();
+        }
     }
 
     public Integer getId() {

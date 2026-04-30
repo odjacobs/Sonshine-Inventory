@@ -39,7 +39,7 @@ Production (AWS Elastic Beanstalk) additionally requires `SPRING_PROFILES_ACTIVE
 - **Services** — Business logic (to be created): needs calculation, pledge expiration via `@Scheduled` nightly job
 - **Controllers** — Thymeleaf `@Controller` classes handling HTTP routes (to be created)
 - **Templates** — Thymeleaf HTML in `src/main/resources/templates/` (to be created)
-- **Migrations** — Flyway SQL scripts in `src/main/resources/db/migration/` (naming: `V001__description.sql`; none created yet)
+- **Migrations** — Flyway SQL scripts in `src/main/resources/db/migration/` (naming: `V1__description.sql`; none created yet)
 
 **Core domain logic (from [DESIGN.md](DESIGN.md)):**
 - `Item.need = MAX(0, quota - currentQuantity)`
