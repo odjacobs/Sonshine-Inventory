@@ -66,7 +66,8 @@ The following entities form the core domain:
 | Category | A top-level grouping (e.g., Canned Goods, Bread, Frozen Items, Cereal, Pasta, Toiletries) |
 | Item | A specific product within a category (e.g., Canned Green Beans, Cheerios). Has a quota and a current inventory count. |
 | Pledge | A donor's commitment to bring in a quantity of a specific item, with contact info and an expiration date. |
-| AdminUser | A staff member who can log in and manage the system. |
+| User | A staff member who can log in and manage the system. |
+| Authorities | Roles granted to a user (e.g., `ROLE_ADMIN`); used by Spring Security. |
 
 ## **4.2 Entity Details**
 
@@ -109,13 +110,23 @@ The following entities form the core domain:
 
 ### **User**
 
+Matches the Spring Security `JdbcDaoImpl` schema. `displayName` is an app-specific extension column.
+
 | **Field** | **Type** | **Notes** |
 | --- | --- | --- |
-| id | INT PK | Auto-generated |
-| username | VARCHAR(100) | Unique login name |
-| passwordHash | VARCHAR(255) | BCrypt hashed — never stored in plain text |
-| displayName | VARCHAR(150) | Shown in the admin UI (e.g., "Jane Smith") |
-| active | BOOLEAN | Inactive accounts cannot log in |
+| username | VARCHAR(50) PK | Natural primary key; unique login name |
+| password | VARCHAR(500) | BCrypt hashed — never stored in plain text |
+| enabled | BOOLEAN | `false` prevents login |
+| displayName | VARCHAR(150) | App-specific extension; shown in admin UI (e.g., "Jane Smith") |
+
+### **Authorities**
+
+| **Field** | **Type** | **Notes** |
+| --- | --- | --- |
+| username | VARCHAR(50) | FK → users(username) |
+| authority | VARCHAR(50) | e.g., `ROLE_ADMIN` |
+
+Unique constraint on (username, authority). All admin accounts are granted `ROLE_ADMIN`. Spring Security's `JdbcDaoImpl` reads this table directly with no custom configuration.
 
 ## **4.3 Pledge Lifecycle**
 
@@ -156,7 +167,7 @@ Pledges follow this state machine:
 
 - Repository layer — Spring Data JPA repositories for each entity
 
-- Domain layer — JPA entity classes (Category, Item, Pledge, AdminUser)
+- Domain layer — JPA entity classes (Category, Item, Pledge, User, Authorities)
 
 ## **5.3 AWS Infrastructure**
 
