@@ -1,14 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Sonshine Food Pantry - Current Inventory</title>
-</head>
-<body>
-    <h1>Sonshine Food Pantry - Current Inventory</h1>
+<head th:replace="~{fragments :: head('Sonshine Food Pantry - Current Inventory')}"></head>
+<body class="bg-light">
 
-    <table border="1">
-        <thead>
+<header th:replace="~{fragments :: header}"></header>
+
+<main class="container">
+    <h1 class="mb-4">Current Inventory</h1>
+
+    <div th:if="${#lists.isEmpty(items)}" class="alert alert-info">
+        No items currently in inventory.
+    </div>
+
+    <table th:unless="${#lists.isEmpty(items)}" class="table table-bordered table-striped table-hover align-middle">
+        <thead class="table-primary">
             <tr>
                 <th>Category</th>
                 <th>Item</th>
@@ -27,7 +32,9 @@
             </tr>
         </tbody>
     </table>
+</main>
 
-    <p th:if="${#lists.isEmpty(items)}">No items currently in inventory.</p>
+<footer th:replace="~{fragments :: footer}"></footer>
+
 </body>
 </html>

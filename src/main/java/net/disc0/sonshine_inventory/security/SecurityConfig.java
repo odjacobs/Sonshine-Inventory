@@ -19,10 +19,11 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests((authorize) -> authorize
                         .requestMatchers("/").permitAll()
+                        .requestMatchers("/*.css").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())
