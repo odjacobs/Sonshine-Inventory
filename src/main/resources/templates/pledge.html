@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Sonshine Food Pantry - Pledge Donation')}"></head>
+<body class="bg-light">
+
+<header th:replace="~{fragments :: header}"></header>
+
+<main class="container" style="max-width: 600px">
+    <h1 class="mb-4">Pledge a Donation</h1>
+
+    <div class="card mb-4">
+        <div class="card-body">
+            <table class="table table-bordered align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Item</th>
+                        <th>Unit</th>
+                        <th>In Stock</th>
+                        <th>Needed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td th:text="${item.name}"></td>
+                        <td th:text="${item.unitLabel}"></td>
+                        <td th:text="${item.quantity}"></td>
+                        <td th:text="${need != null ? need : 'N/A'}"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <form th:action="@{/pledge/save}" method="post">
+                <input type="hidden" name="itemId" th:value="${item.id}">
+
+                <div class="mb-3">
+                    <label class="form-label" for="donorName">Your Name</label>
+                    <input type="text" class="form-control" id="donorName" name="donorName"
+                           placeholder="Full name" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label" for="donorContact">Email or Phone</label>
+                    <input type="text" class="form-control" id="donorContact" name="donorContact"
+                           placeholder="So we can follow up with you" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="itemQuantity">
+                        Quantity
+                        <span th:if="${item.unitLabel}" class="text-muted fw-normal"
+                              th:text="|(${item.unitLabel})|"></span>
+                    </label>
+                    <input type="number" class="form-control" id="itemQuantity" name="quantity"
+                           min="1" placeholder="How many are you donating?" required>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-lg w-100">Pledge Donation</button>
+            </form>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+
+</body>
+</html>

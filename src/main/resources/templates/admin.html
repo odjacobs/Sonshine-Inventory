@@ -5,34 +5,234 @@
 
 <header th:replace="~{fragments :: header}"></header>
 
-<main class="container">
+<main class="container pb-5">
     <h1 class="mb-4">Admin</h1>
 
+    <!-- Editable save form -->
+    <form id="admin-form" th:action="@{/admin/save}" method="post">
+
+        <!-- Categories -->
+        <div class="card mb-5">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Categories</h2>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-striped table-hover align-middle mb-4">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Name</th>
+                            <th style="width:12rem">Display Order</th>
+                            <th style="width:8rem">Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="cat, stat : ${categories}">
+                            <td>
+                                <input type="hidden"
+                                       th:name="|categories[${stat.index}].id|"
+                                       th:value="${cat.id}">
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       th:name="|categories[${stat.index}].name|"
+                                       th:value="${cat.name}"
+                                       required>
+                            </td>
+                            <td>
+                                <input type="number"
+                                       class="form-control form-control-sm"
+                                       th:name="|categories[${stat.index}].displayOrder|"
+                                       th:value="${cat.displayOrder}"
+                                       min="0" required>
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        th:name="|categories[${stat.index}].active|">
+                                    <option value="true"  th:selected="${cat.active}">Yes</option>
+                                    <option value="false" th:selected="${!cat.active}">No</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Items -->
+        <div class="card mb-5">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Items</h2>
+            </div>
+            <div class="card-body">
+                <table class="table table-bordered table-striped table-hover align-middle mb-4">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Category</th>
+                            <th>Name</th>
+                            <th>Unit</th>
+                            <th style="width:8rem">In Stock</th>
+                            <th style="width:8rem">Quota</th>
+                            <th style="width:8rem">Active</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="item, stat : ${items}">
+                            <td>
+                                <input type="hidden"
+                                       th:name="|items[${stat.index}].id|"
+                                       th:value="${item.id}">
+                                <select class="form-select form-select-sm"
+                                        th:name="|items[${stat.index}].categoryId|"
+                                        required>
+                                    <option th:each="cat : ${categories}"
+                                            th:value="${cat.id}"
+                                            th:text="${cat.name}"
+                                            th:selected="${cat.id == item.categoryId}"></option>
+                                </select>
+                            </td>
+                            <td>
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       th:name="|items[${stat.index}].name|"
+                                       th:value="${item.name}"
+                                       required>
+                            </td>
+                            <td>
+                                <input type="text"
+                                       class="form-control form-control-sm"
+                                       th:name="|items[${stat.index}].unitLabel|"
+                                       th:value="${item.unitLabel}"
+                                       placeholder="e.g. cans, lbs">
+                            </td>
+                            <td>
+                                <input type="number"
+                                       class="form-control form-control-sm"
+                                       th:name="|items[${stat.index}].quantity|"
+                                       th:value="${item.quantity}"
+                                       min="0" required>
+                            </td>
+                            <td>
+                                <input type="number"
+                                       class="form-control form-control-sm"
+                                       th:name="|items[${stat.index}].quota|"
+                                       th:value="${item.quota}"
+                                       min="0">
+                            </td>
+                            <td>
+                                <select class="form-select form-select-sm"
+                                        th:name="|items[${stat.index}].active|">
+                                    <option value="true"  th:selected="${item.active}">Yes</option>
+                                    <option value="false" th:selected="${!item.active}">No</option>
+                                </select>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Floating save bar -->
+        <div id="save-bar" style="position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:1050;display:none">
+            <button type="submit" class="btn btn-success btn-lg shadow-lg px-5">
+                Save Changes
+            </button>
+        </div>
+
+    </form><!-- end #admin-form -->
+
+    <!-- Pledges -->
     <div class="card mb-5">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Categories</h2>
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h2 class="h5 mb-0">Pledges</h2>
+            <ul class="nav nav-pills nav-sm mb-0">
+                <li class="nav-item">
+                    <a class="nav-link py-1 px-2"
+                       th:classappend="${pledgeStatus == 'OPEN'} ? 'active'"
+                       th:href="@{/admin(pledgeStatus='OPEN')}">Open</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link py-1 px-2"
+                       th:classappend="${pledgeStatus == 'FULFILLED'} ? 'active'"
+                       th:href="@{/admin(pledgeStatus='FULFILLED')}">Fulfilled</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link py-1 px-2"
+                       th:classappend="${pledgeStatus == 'EXPIRED'} ? 'active'"
+                       th:href="@{/admin(pledgeStatus='EXPIRED')}">Expired</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link py-1 px-2"
+                       th:classappend="${pledgeStatus == 'CANCELLED'} ? 'active'"
+                       th:href="@{/admin(pledgeStatus='CANCELLED')}">Cancelled</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link py-1 px-2"
+                       th:classappend="${pledgeStatus == 'ALL'} ? 'active'"
+                       th:href="@{/admin(pledgeStatus='ALL')}">All</a>
+                </li>
+            </ul>
         </div>
         <div class="card-body">
-            <table class="table table-bordered table-striped table-hover align-middle mb-4">
+            <div th:if="${#lists.isEmpty(pledges)}" class="text-muted fst-italic">
+                No pledges found for this status.
+            </div>
+            <table th:unless="${#lists.isEmpty(pledges)}"
+                   class="table table-bordered table-striped table-hover align-middle mb-0">
                 <thead class="table-light">
                     <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Display Order</th>
-                        <th>Active</th>
+                        <th>Donor</th>
+                        <th>Contact</th>
+                        <th>Item</th>
+                        <th style="width:6rem">Qty</th>
+                        <th style="width:7rem">Status</th>
+                        <th style="width:10rem">Created</th>
+                        <th style="width:10rem">Expires</th>
+                        <th style="width:11rem">Actions</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr th:each="cat : ${categories}">
-                        <td th:text="${cat.id}"></td>
-                        <td th:text="${cat.name}"></td>
-                        <td th:text="${cat.displayOrder}"></td>
-                        <td th:text="${cat.active}"></td>
+                    <tr th:each="pledge : ${pledges}">
+                        <td th:text="${pledge.donorName}"></td>
+                        <td th:text="${pledge.donorContact}"></td>
+                        <td th:text="${itemNames[pledge.itemId]}"></td>
+                        <td th:text="${pledge.quantity}"></td>
+                        <td>
+                            <span class="badge"
+                                  th:classappend="${pledge.status.name() == 'OPEN'} ? 'bg-primary'
+                                               : (${pledge.status.name() == 'FULFILLED'} ? 'bg-success'
+                                               : (${pledge.status.name() == 'EXPIRED'} ? 'bg-secondary'
+                                               : 'bg-danger'))"
+                                  th:text="${pledge.status}"></span>
+                        </td>
+                        <td th:text="${#temporals.format(pledge.createdAt, 'MM/dd/yy h:mm a')}"></td>
+                        <td th:text="${#temporals.format(pledge.expiresAt, 'MM/dd/yy')}"></td>
+                        <td>
+                            <div th:if="${pledge.status.name() == 'OPEN'}" class="d-flex gap-1">
+                                <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/fulfill'}" method="post">
+                                    <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
+                                    <button type="submit" class="btn btn-success btn-sm">Fulfill</button>
+                                </form>
+                                <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/cancel'}" method="post">
+                                    <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                                </form>
+                            </div>
+                            <span th:unless="${pledge.status.name() == 'OPEN'}"
+                                  th:if="${pledge.fulfilledAt != null}"
+                                  class="text-muted small"
+                                  th:text="${#temporals.format(pledge.fulfilledAt, 'MM/dd/yy')}"></span>
+                        </td>
                     </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
 
-            <h3 class="h6 fw-semibold mb-3">Add Category</h3>
+    <!-- Add Category -->
+    <div class="card mb-5">
+        <div class="card-header">
+            <h2 class="h5 mb-0">Add Category</h2>
+        </div>
+        <div class="card-body">
             <form th:action="@{/admin/categories}" method="post" class="row g-2 align-items-end">
                 <div class="col-auto">
                     <label class="form-label" for="catName">Name</label>
@@ -45,37 +245,12 @@
         </div>
     </div>
 
+    <!-- Add Item -->
     <div class="card mb-5">
         <div class="card-header">
-            <h2 class="h5 mb-0">Items</h2>
+            <h2 class="h5 mb-0">Add Item</h2>
         </div>
         <div class="card-body">
-            <table class="table table-bordered table-striped table-hover align-middle mb-4">
-                <thead class="table-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Category</th>
-                        <th>Name</th>
-                        <th>Unit</th>
-                        <th>In Stock</th>
-                        <th>Quota</th>
-                        <th>Active</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="item : ${items}">
-                        <td th:text="${item.id}"></td>
-                        <td th:text="${categoryNames[item.categoryId]}"></td>
-                        <td th:text="${item.name}"></td>
-                        <td th:text="${item.unitLabel}"></td>
-                        <td th:text="${item.quantity}"></td>
-                        <td th:text="${item.quota}"></td>
-                        <td th:text="${item.active}"></td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 class="h6 fw-semibold mb-3">Add Item</h3>
             <form th:action="@{/admin/items}" method="post" class="row g-3">
                 <div class="col-md-4">
                     <label class="form-label" for="itemCategory">Category</label>
@@ -111,6 +286,34 @@
 </main>
 
 <footer th:replace="~{fragments :: footer}"></footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
+        crossorigin="anonymous"></script>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('admin-form');
+        const saveBar = document.getElementById('save-bar');
+
+        // Snapshot original values of every input/select inside the edit form
+        const originals = new Map();
+        form.querySelectorAll('input[name], select[name]').forEach(el => {
+            originals.set(el, el.value);
+        });
+
+        function checkDirty() {
+            let dirty = false;
+            originals.forEach((orig, el) => {
+                if (el.value !== orig) dirty = true;
+            });
+            saveBar.style.display = dirty ? 'block' : 'none';
+        }
+
+        form.addEventListener('input', checkDirty);
+        form.addEventListener('change', checkDirty);
+    });
+</script>
 
 </body>
 </html>

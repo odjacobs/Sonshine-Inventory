@@ -20,6 +20,7 @@
                 <th>Unit</th>
                 <th>In Stock</th>
                 <th>Quota</th>
+                <th>Pledge</th>
             </tr>
         </thead>
         <tbody>
@@ -29,6 +30,7 @@
                 <td th:text="${item.unitLabel}"></td>
                 <td th:text="${item.quantity}"></td>
                 <td th:text="${item.quota}"></td>
+                <td><a class="btn btn-success btn-sm" th:href="@{/pledge(itemId=${item.id})}">Pledge Donation</a></td>
             </tr>
         </tbody>
     </table>
