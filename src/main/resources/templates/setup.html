@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('First-Time Setup')}"></head>
+<body class="bg-light">
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 100vh;">
+    <div class="card shadow-sm" style="width: 100%; max-width: 460px;">
+        <div class="card-body p-4">
+            <h1 class="h4 mb-1">Welcome to Sonshine Room</h1>
+            <p class="text-muted mb-4">Create your first administrator account to get started.</p>
+
+            <div th:if="${error}" class="alert alert-danger" th:text="${error}"></div>
+
+            <form method="post" th:action="@{/setup}">
+                <div class="mb-3">
+                    <label for="username" class="form-label">Username</label>
+                    <input type="text" class="form-control" id="username" name="username"
+                           th:value="${username}" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label for="displayName" class="form-label">Display Name</label>
+                    <input type="text" class="form-control" id="displayName" name="displayName"
+                           th:value="${displayName}" required>
+                </div>
+                <div class="mb-3">
+                    <label for="password" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="password" name="password" required>
+                </div>
+                <div class="mb-4">
+                    <label for="confirmPassword" class="form-label">Confirm Password</label>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Create Admin Account</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

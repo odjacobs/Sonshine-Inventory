@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      lang="en">
 <head th:fragment="head(title)">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -18,6 +20,7 @@
             <div class="navbar-nav ms-auto">
                 <a class="nav-link" th:href="@{/}">Home</a>
                 <a class="nav-link" th:href="@{/admin}">Admin</a>
+                <a class="nav-link" sec:authorize="isAuthenticated()" th:href="@{/admin/users/register}">Register User</a>
             </div>
         </div>
     </nav>

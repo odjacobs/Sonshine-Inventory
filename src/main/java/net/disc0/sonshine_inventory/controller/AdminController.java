@@ -3,9 +3,14 @@ package net.disc0.sonshine_inventory.controller;
 import net.disc0.sonshine_inventory.dao.CategoryRepository;
 import net.disc0.sonshine_inventory.dao.ItemRepository;
 import net.disc0.sonshine_inventory.dao.PledgeRepository;
+import net.disc0.sonshine_inventory.dao.UserRepository;
 import net.disc0.sonshine_inventory.entities.Category;
 import net.disc0.sonshine_inventory.entities.Item;
 import net.disc0.sonshine_inventory.entities.Pledge;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.provisioning.UserDetailsManager;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,13 +34,22 @@ public class AdminController {
     private final CategoryRepository categoryRepository;
     private final ItemRepository itemRepository;
     private final PledgeRepository pledgeRepository;
+    private final UserRepository userRepository;
+    private final UserDetailsManager userDetailsManager;
+    private final PasswordEncoder passwordEncoder;
 
     public AdminController(CategoryRepository categoryRepository,
                            ItemRepository itemRepository,
-                           PledgeRepository pledgeRepository) {
+                           PledgeRepository pledgeRepository,
+                           UserRepository userRepository,
+                           UserDetailsManager userDetailsManager,
+                           PasswordEncoder passwordEncoder) {
         this.categoryRepository = categoryRepository;
         this.itemRepository = itemRepository;
         this.pledgeRepository = pledgeRepository;
+        this.userRepository = userRepository;
+        this.userDetailsManager = userDetailsManager;
+        this.passwordEncoder = passwordEncoder;
     }
 
     // --- Form-binding classes for bulk save ---
@@ -43,11 +57,14 @@ public class AdminController {
     public static class AdminSaveRequest {
         private List<CategoryForm> categories = new ArrayList<>();
         private List<ItemForm> items = new ArrayList<>();
+        private List<UserForm> users = new ArrayList<>();
 
         public List<CategoryForm> getCategories() { return categories; }
         public void setCategories(List<CategoryForm> categories) { this.categories = categories; }
         public List<ItemForm> getItems() { return items; }
         public void setItems(List<ItemForm> items) { this.items = items; }
+        public List<UserForm> getUsers() { return users; }
+        public void setUsers(List<UserForm> users) { this.users = users; }
     }
 
     public static class CategoryForm {
@@ -64,6 +81,22 @@ public class AdminController {
         public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
         public boolean isActive() { return active; }
         public void setActive(boolean active) { this.active = active; }
+    }
+
+    public static class UserForm {
+        private String username;
+        private String displayName;
+        private boolean enabled;
+        private String newPassword;
+
+        public String getUsername() { return username; }
+        public void setUsername(String username) { this.username = username; }
+        public String getDisplayName() { return displayName; }
+        public void setDisplayName(String displayName) { this.displayName = displayName; }
+        public boolean isEnabled() { return enabled; }
+        public void setEnabled(boolean enabled) { this.enabled = enabled; }
+        public String getNewPassword() { return newPassword; }
+        public void setNewPassword(String newPassword) { this.newPassword = newPassword; }
     }
 
     public static class ItemForm {
@@ -123,12 +156,18 @@ public class AdminController {
                         Comparator.nullsLast(Comparator.reverseOrder())))
                 .toList();
 
+        List<net.disc0.sonshine_inventory.entities.User> users = userRepository.findAll()
+                .stream()
+                .sorted(Comparator.comparing(net.disc0.sonshine_inventory.entities.User::getUsername))
+                .toList();
+
         model.addAttribute("categories", categories);
         model.addAttribute("categoryNames", categoryNames);
         model.addAttribute("items", items);
         model.addAttribute("itemNames", itemNames);
         model.addAttribute("pledges", pledges);
         model.addAttribute("pledgeStatus", pledgeStatus);
+        model.addAttribute("users", users);
         return "admin";
     }
 
@@ -154,6 +193,18 @@ public class AdminController {
                     existing.setQuota(itemForm.getQuota());
                     existing.setActive(itemForm.isActive());
                     itemRepository.save(existing);
+                });
+            }
+        }
+        if (saveRequest.getUsers() != null) {
+            for (UserForm userForm : saveRequest.getUsers()) {
+                userRepository.findById(userForm.getUsername()).ifPresent(existing -> {
+                    existing.setDisplayName(userForm.getDisplayName());
+                    existing.setEnabled(userForm.isEnabled());
+                    if (userForm.getNewPassword() != null && !userForm.getNewPassword().isBlank()) {
+                        existing.setPassword(passwordEncoder.encode(userForm.getNewPassword()));
+                    }
+                    userRepository.save(existing);
                 });
             }
         }
@@ -204,5 +255,53 @@ public class AdminController {
                           @RequestParam(required = false) Integer quota) {
         itemRepository.save(new Item(categoryId, name, unitLabel, quantity, quota, true));
         return "redirect:/admin";
+    }
+
+    @GetMapping("/users/register")
+    public String registerPage(@RequestParam(required = false) String success, Model model) {
+        if (success != null) {
+            model.addAttribute("success", "Admin user created successfully.");
+        }
+        return "admin-register";
+    }
+
+    @PostMapping("/users/register")
+    public String registerAdmin(@RequestParam String username,
+                                @RequestParam String displayName,
+                                @RequestParam String password,
+                                @RequestParam String confirmPassword,
+                                Model model) {
+        if (username.isBlank() || displayName.isBlank() || password.isBlank()) {
+            model.addAttribute("error", "All fields are required.");
+            model.addAttribute("username", username);
+            model.addAttribute("displayName", displayName);
+            return "admin-register";
+        }
+
+        if (!password.equals(confirmPassword)) {
+            model.addAttribute("error", "Passwords do not match.");
+            model.addAttribute("username", username);
+            model.addAttribute("displayName", displayName);
+            return "admin-register";
+        }
+
+        if (userDetailsManager.userExists(username)) {
+            model.addAttribute("error", "Username \"" + username + "\" is already taken.");
+            model.addAttribute("displayName", displayName);
+            return "admin-register";
+        }
+
+        UserDetails newUser = User.withUsername(username)
+                .password(passwordEncoder.encode(password))
+                .roles("ADMIN")
+                .build();
+        userDetailsManager.createUser(newUser);
+
+        userRepository.findById(username).ifPresent(u -> {
+            u.setDisplayName(displayName);
+            userRepository.save(u);
+        });
+
+        return "redirect:/admin/users/register?success";
     }
 }
