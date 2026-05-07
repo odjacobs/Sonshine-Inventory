@@ -1,42 +1,46 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
-<head th:replace="~{fragments :: head('Sonshine Food Pantry - Current Inventory')}"></head>
+<head th:replace="~{fragments :: head('Sonshine Food Pantry - Current Needs')}"></head>
 <body class="bg-light">
 
 <header th:replace="~{fragments :: header}"></header>
 
-<main class="container">
-    <h1 class="mb-4">Current Inventory</h1>
+<main class="container pb-4">
+    <h1 class="h3 mb-1">Current Needs</h1>
+    <p class="text-muted mb-4">Tap an item to pledge a donation.</p>
 
-    <div th:if="${#lists.isEmpty(items)}" class="alert alert-info">
-        No items currently in inventory.
+    <div th:if="${#maps.isEmpty(itemsByCategory)}" class="alert alert-info">
+        No items currently needed. Check back soon!
     </div>
 
-    <table th:unless="${#lists.isEmpty(items)}" class="table table-bordered table-striped table-hover align-middle">
-        <thead class="table-primary">
-            <tr>
-                <th>Category</th>
-                <th>Item</th>
-                <th>Unit</th>
-                <th>In Stock</th>
-                <th>Quota</th>
-                <th>Pledge</th>
-            </tr>
-        </thead>
-        <tbody>
-            <tr th:each="item : ${items}">
-                <td th:text="${categoryNames[item.categoryId]}"></td>
-                <td th:text="${item.name}"></td>
-                <td th:text="${item.unitLabel}"></td>
-                <td th:text="${item.quantity}"></td>
-                <td th:text="${item.quota}"></td>
-                <td><a class="btn btn-success btn-sm" th:href="@{/pledge(itemId=${item.id})}">Pledge Donation</a></td>
-            </tr>
-        </tbody>
-    </table>
+    <th:block th:each="cat : ${categories}"
+              th:if="${itemsByCategory[cat.id] != null and !#lists.isEmpty(itemsByCategory[cat.id])}">
+
+        <h2 class="h6 text-uppercase text-muted fw-semibold mt-4 mb-2"
+            th:text="${cat.name}"></h2>
+
+        <div class="list-group mb-3 shadow-sm">
+            <a th:each="item : ${itemsByCategory[cat.id]}"
+               th:href="@{/pledge(itemId=${item.id})}"
+               class="list-group-item list-group-item-action d-flex justify-content-between align-items-center py-3 px-3">
+                <div>
+                    <div class="fw-semibold" th:text="${item.name}"></div>
+                    <div class="text-muted small mt-1">
+                        <span th:if="${item.unitLabel}" th:text="${item.unitLabel + ' · '}"></span>
+                        <span th:text="${item.quantity} + ' in stock'"></span>
+                        <span th:if="${item.quota != null}"
+                              th:text="' · need ' + ${item.quota - item.quantity > 0 ? item.quota - item.quantity : 0}"></span>
+                    </div>
+                </div>
+                <span class="btn btn-success btn-sm ms-3 flex-shrink-0">Pledge</span>
+            </a>
+        </div>
+
+    </th:block>
 </main>
 
 <footer th:replace="~{fragments :: footer}"></footer>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
 
 </body>
 </html>

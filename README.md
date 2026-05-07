@@ -47,6 +47,8 @@ export SPRING_DATASOURCE_PASSWORD=<password>
 ```
 The app will be available at `http://localhost:8080`. Flyway applies migrations automatically on startup.
 
+4. On first run, visit `http://localhost:8080/setup` to create the initial admin account. This page is only accessible when no users exist in the database.
+
 ## Build
 
 ```bash

@@ -35,32 +35,60 @@ Production (AWS Elastic Beanstalk) additionally requires `SPRING_PROFILES_ACTIVE
 
 **Layers:**
 - **Entities** (`/entities`) — JPA-mapped domain objects: `Category`, `Item`, `Pledge`, `User`. Soft-deletes via `active` boolean flag on Category and Item.
-- **Repositories** (`/dao`) — Spring Data JPA interfaces: `CategoryRepository`, `ItemRepository`, `PledgeRepository`. User/Authorities repositories not yet created.
-- **Services** — Business logic (to be created): needs calculation, pledge expiration via `@Scheduled` nightly job
-- **Controllers** — Thymeleaf `@Controller` classes handling HTTP routes (to be created)
-- **Templates** — Thymeleaf HTML in `src/main/resources/templates/` (to be created)
-- **Migrations** — Flyway SQL scripts in `src/main/resources/db/migration/` (naming: `V1__description.sql`; none created yet)
+- **Repositories** (`/dao`) — Spring Data JPA interfaces: `CategoryRepository`, `ItemRepository`, `PledgeRepository`, `UserRepository`.
+- **Controllers** (`/controller`) — Thymeleaf `@Controller` classes: `HomeController`, `PledgeController`, `AdminController`, `SetupController`. No separate service layer; business logic lives in controllers.
+- **Security** (`/security`) — `SecurityConfig` configures `JdbcUserDetailsManager`, `BCryptPasswordEncoder`, and the security filter chain.
+- **Templates** — Thymeleaf HTML in `src/main/resources/templates/`.
+- **Migrations** — Flyway SQL scripts in `src/main/resources/db/migration/` (naming: `V{n}__{description}.sql`).
 
 **Core domain logic (from [DESIGN.md](DESIGN.md)):**
 - `Item.need = MAX(0, quota - currentQuantity)`
 - `Item.remainingNeed = MAX(0, need - SUM(open_pledge_quantities))`
-- Pledge status lifecycle: `OPEN → FULFILLED` (admin action, increments `item.currentQuantity`) or `OPEN → EXPIRED` (nightly scheduler at 2 AM) or `OPEN → CANCELLED`
+- Pledge status lifecycle: `OPEN → FULFILLED` (admin action, increments `item.currentQuantity`) or `OPEN → EXPIRED` (nightly scheduler at 2 AM, not yet implemented) or `OPEN → CANCELLED`
 - `Pledge.expiresAt = createdAt + 7 days`
 
-**Routes (from DESIGN.md):**
-- `GET /` — public needs list
-- `POST /pledge` — submit a pledge
-- `GET /pledge/{id}` — pledge confirmation
-- `GET /admin/*` — admin inventory and pledge management (Spring Security protected)
-- `GET /admin/login` — login page
+**Routes:**
+- `GET /` — public needs list, grouped by category
+- `GET /pledge?itemId={id}` — pledge form for a specific item
+- `POST /pledge/save` — submit a pledge, redirects to home
+- `GET /setup` — first-time admin setup (redirects to `/login` if any user exists)
+- `POST /setup` — create the first admin account
+- `GET /admin` — admin dashboard (categories, items, pledges, users)
+- `POST /admin/save` — bulk save categories, items, and user edits
+- `POST /admin/pledges/{id}/fulfill` — mark pledge fulfilled, increment item quantity
+- `POST /admin/pledges/{id}/cancel` — cancel a pledge
+- `POST /admin/categories` — add a new category
+- `POST /admin/items` — add a new item
+- `GET /admin/users/register` — register a new admin user
+- `POST /admin/users/register` — create a new admin user
 
-**Security:** Spring Security form-based login, BCrypt password hashing. `User` entity uses the standard Spring Security `JdbcDaoImpl` schema (`users` / `authorities` tables); an `Authorities` entity is planned but not yet created.
+**Security:** Spring Security form-based login (default `/login` page), BCrypt password hashing. Users are stored in the `users` table and authorities in the `authorities` table, managed via `JdbcUserDetailsManager`. All admin routes require authentication; `/`, `/pledge`, and `/setup` are public.
+
+**Templates:**
+- `fragments.html` — shared `head`, `header` (responsive navbar with hamburger), `footer`, and `scripts` (Bootstrap JS) fragments
+- `index.html` — public needs list, mobile-first list-group layout grouped by category
+- `pledge.html` — pledge form with item details as key-value pairs
+- `setup.html` — first-time admin account creation (standalone, no navbar)
+- `admin.html` — full admin dashboard with inline-editable categories, items, users tables and pledge management
+- `admin-register.html` — form to register additional admin users
+
+**Flyway migrations:**
+- `V1` — `users` and `authorities` tables
+- `V2` — `categories`, `items`, `pledges` tables
+- `V3` — add `AUTO_INCREMENT` to id columns
+- `V4` — add `display_name` column to `users`
 
 ## Current State
 
-Early-stage. What exists:
-- **Entities:** `Category`, `Item`, `Pledge`, `User` (in `/entities`)
-- **Repositories:** `CategoryRepository`, `ItemRepository`, `PledgeRepository` (in `/dao`) — bare `JpaRepository` extensions, no custom queries yet
-- **Nothing yet:** SQL migrations, services, controllers, Thymeleaf templates, `Authorities` entity, security config class
+Functionally complete for v1 core features. What exists:
+- Public inventory view and pledge submission
+- Admin dashboard: inline editing of categories, items, and users; pledge management (fulfill/cancel)
+- Admin user registration and first-time setup
+- Mobile-responsive UI (Bootstrap 5.3.8)
+
+**Not yet implemented (from DESIGN.md):**
+- Nightly pledge expiration scheduler (`@Scheduled` job at 2 AM)
+- Pledge confirmation page (`GET /pledge/{id}`)
+- `remainingNeed` calculation (subtracting open pledges from displayed need)
 
 [DESIGN.md](DESIGN.md) is the authoritative spec for intended behavior.

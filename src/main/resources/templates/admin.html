@@ -12,11 +12,12 @@
     <form id="admin-form" th:action="@{/admin/save}" method="post">
 
         <!-- Categories -->
-        <div class="card mb-5">
+        <div id="categories" class="card mb-5">
             <div class="card-header">
                 <h2 class="h5 mb-0">Categories</h2>
             </div>
             <div class="card-body">
+                <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover align-middle mb-4">
                     <thead class="table-light">
                         <tr>
@@ -44,25 +45,46 @@
                                        th:value="${cat.displayOrder}"
                                        min="0" required>
                             </td>
-                            <td>
-                                <select class="form-select form-select-sm"
-                                        th:name="|categories[${stat.index}].active|">
-                                    <option value="true"  th:selected="${cat.active}">Yes</option>
-                                    <option value="false" th:selected="${!cat.active}">No</option>
-                                </select>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           th:name="|categories[${stat.index}].active|"
+                                           value="true"
+                                           th:checked="${cat.active}">
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Category -->
+        <div id="add-category" class="card mb-5">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Add Category</h2>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/categories}" method="post" class="row g-2 align-items-end">
+                    <div class="col-12 col-sm-auto">
+                        <label class="form-label" for="catName">Name</label>
+                        <input id="catName" type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="col-12 col-sm-auto">
+                        <button type="submit" class="btn btn-primary w-100">Add Category</button>
+                    </div>
+                </form>
             </div>
         </div>
 
         <!-- Items -->
-        <div class="card mb-5">
+        <div id="items" class="card mb-5">
             <div class="card-header">
                 <h2 class="h5 mb-0">Items</h2>
             </div>
             <div class="card-body">
+                <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover align-middle mb-4">
                     <thead class="table-light">
                         <tr>
@@ -117,26 +139,160 @@
                                        th:value="${item.quota}"
                                        min="0">
                             </td>
-                            <td>
-                                <select class="form-select form-select-sm"
-                                        th:name="|items[${stat.index}].active|">
-                                    <option value="true"  th:selected="${item.active}">Yes</option>
-                                    <option value="false" th:selected="${!item.active}">No</option>
-                                </select>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           th:name="|items[${stat.index}].active|"
+                                           value="true"
+                                           th:checked="${item.active}">
+                                </div>
                             </td>
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
+        <!-- Add Item -->
+        <div id="add-items" class="card mb-5">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Add Item</h2>
+            </div>
+            <div class="card-body">
+                <form th:action="@{/admin/items}" method="post" class="row g-3">
+                    <div class="col-md-4">
+                        <label class="form-label" for="itemCategory">Category</label>
+                        <select id="itemCategory" name="categoryId" class="form-select" required>
+                            <option value="">-- Select --</option>
+                            <option th:each="cat : ${categories}"
+                                    th:value="${cat.id}"
+                                    th:text="${cat.name}"></option>
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="itemName">Name</label>
+                        <input id="itemName" type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label" for="itemUnit">Unit Label</label>
+                        <input id="itemUnit" type="text" name="unitLabel" class="form-control" placeholder="e.g. cans, lbs">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="itemQty">Initial Quantity</label>
+                        <input id="itemQty" type="number" name="quantity" class="form-control" value="0" min="0" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label" for="itemQuota">Quota</label>
+                        <input id="itemQuota" type="number" name="quota" class="form-control" min="0">
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">Add Item</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pledges -->
+        <div id="pledges" class="card mb-5">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
+                    <h2 class="h5 mb-0">Pledges</h2>
+                    <ul class="nav nav-pills nav-sm mb-0 flex-wrap">
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2"
+                               th:classappend="${pledgeStatus == 'OPEN'} ? 'active'"
+                               th:href="@{/admin(pledgeStatus='OPEN')}">Open</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2"
+                               th:classappend="${pledgeStatus == 'FULFILLED'} ? 'active'"
+                               th:href="@{/admin(pledgeStatus='FULFILLED')}">Fulfilled</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2"
+                               th:classappend="${pledgeStatus == 'EXPIRED'} ? 'active'"
+                               th:href="@{/admin(pledgeStatus='EXPIRED')}">Expired</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2"
+                               th:classappend="${pledgeStatus == 'CANCELLED'} ? 'active'"
+                               th:href="@{/admin(pledgeStatus='CANCELLED')}">Cancelled</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link py-1 px-2"
+                               th:classappend="${pledgeStatus == 'ALL'} ? 'active'"
+                               th:href="@{/admin(pledgeStatus='ALL')}">All</a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card-body">
+                <div th:if="${#lists.isEmpty(pledges)}" class="text-muted fst-italic">
+                    No pledges found for this status.
+                </div>
+                <div th:unless="${#lists.isEmpty(pledges)}" class="table-responsive">
+                    <table class="table table-bordered table-striped table-hover align-middle mb-0">
+                        <thead class="table-light">
+                        <tr>
+                            <th>Donor</th>
+                            <th>Contact</th>
+                            <th>Item</th>
+                            <th style="width:6rem">Qty</th>
+                            <th style="width:7rem">Status</th>
+                            <th style="width:10rem">Created</th>
+                            <th style="width:10rem">Expires</th>
+                            <th style="width:11rem">Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="pledge : ${pledges}">
+                            <td th:text="${pledge.donorName}"></td>
+                            <td th:text="${pledge.donorContact}"></td>
+                            <td th:text="${itemNames[pledge.itemId]}"></td>
+                            <td th:text="${pledge.quantity}"></td>
+                            <td>
+                            <span class="badge"
+                                  th:classappend="${pledge.status.name() == 'OPEN'} ? 'bg-primary'
+                                               : (${pledge.status.name() == 'FULFILLED'} ? 'bg-success'
+                                               : (${pledge.status.name() == 'EXPIRED'} ? 'bg-secondary'
+                                               : 'bg-danger'))"
+                                  th:text="${pledge.status}"></span>
+                            </td>
+                            <td th:text="${#temporals.format(pledge.createdAt, 'MM/dd/yy h:mm a')}"></td>
+                            <td th:text="${#temporals.format(pledge.expiresAt, 'MM/dd/yy')}"></td>
+                            <td>
+                                <div th:if="${pledge.status.name() == 'OPEN'}" class="d-flex gap-1">
+                                    <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/fulfill'}" method="post">
+                                        <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
+                                        <button type="submit" class="btn btn-success btn-sm">Fulfill</button>
+                                    </form>
+                                    <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/cancel'}" method="post">
+                                        <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
+                                        <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
+                                    </form>
+                                </div>
+                                <span th:unless="${pledge.status.name() == 'OPEN'}"
+                                      th:if="${pledge.fulfilledAt != null}"
+                                      class="text-muted small"
+                                      th:text="${#temporals.format(pledge.fulfilledAt, 'MM/dd/yy')}"></span>
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+
         <!-- Users -->
-        <div class="card mb-5">
+        <div id="users" class="card mb-5">
             <div class="card-header d-flex justify-content-between align-items-center">
                 <h2 class="h5 mb-0">Admin Users</h2>
                 <a th:href="@{/admin/users/register}" class="btn btn-sm btn-outline-primary">Register New User</a>
             </div>
             <div class="card-body">
+                <div class="table-responsive">
                 <table class="table table-bordered table-striped table-hover align-middle mb-0">
                     <thead class="table-light">
                         <tr>
@@ -160,12 +316,13 @@
                                        th:name="|users[${stat.index}].displayName|"
                                        th:value="${user.displayName}">
                             </td>
-                            <td>
-                                <select class="form-select form-select-sm"
-                                        th:name="|users[${stat.index}].enabled|">
-                                    <option value="true"  th:selected="${user.enabled}">Yes</option>
-                                    <option value="false" th:selected="${!user.enabled}">No</option>
-                                </select>
+                            <td class="text-center">
+                                <div class="form-check form-switch d-inline-block">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           th:name="|users[${stat.index}].enabled|"
+                                           value="true"
+                                           th:checked="${user.enabled}">
+                                </div>
                             </td>
                             <td>
                                 <input type="password"
@@ -177,185 +334,41 @@
                         </tr>
                     </tbody>
                 </table>
+                </div>
             </div>
         </div>
 
         <!-- Floating save bar -->
-        <div id="save-bar" style="position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);z-index:1050;display:none">
-            <button type="submit" class="btn btn-success btn-lg shadow-lg px-5">
+        <div id="save-bar" style="position:fixed;bottom:1.5rem;left:1rem;right:1rem;z-index:1050;display:none;text-align:center">
+            <button type="submit" class="btn btn-success btn-lg shadow-lg px-5 w-100" style="max-width:20rem">
                 Save Changes
             </button>
         </div>
 
     </form><!-- end #admin-form -->
 
-    <!-- Pledges -->
-    <div class="card mb-5">
-        <div class="card-header d-flex justify-content-between align-items-center">
-            <h2 class="h5 mb-0">Pledges</h2>
-            <ul class="nav nav-pills nav-sm mb-0">
-                <li class="nav-item">
-                    <a class="nav-link py-1 px-2"
-                       th:classappend="${pledgeStatus == 'OPEN'} ? 'active'"
-                       th:href="@{/admin(pledgeStatus='OPEN')}">Open</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link py-1 px-2"
-                       th:classappend="${pledgeStatus == 'FULFILLED'} ? 'active'"
-                       th:href="@{/admin(pledgeStatus='FULFILLED')}">Fulfilled</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link py-1 px-2"
-                       th:classappend="${pledgeStatus == 'EXPIRED'} ? 'active'"
-                       th:href="@{/admin(pledgeStatus='EXPIRED')}">Expired</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link py-1 px-2"
-                       th:classappend="${pledgeStatus == 'CANCELLED'} ? 'active'"
-                       th:href="@{/admin(pledgeStatus='CANCELLED')}">Cancelled</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link py-1 px-2"
-                       th:classappend="${pledgeStatus == 'ALL'} ? 'active'"
-                       th:href="@{/admin(pledgeStatus='ALL')}">All</a>
-                </li>
-            </ul>
-        </div>
-        <div class="card-body">
-            <div th:if="${#lists.isEmpty(pledges)}" class="text-muted fst-italic">
-                No pledges found for this status.
-            </div>
-            <table th:unless="${#lists.isEmpty(pledges)}"
-                   class="table table-bordered table-striped table-hover align-middle mb-0">
-                <thead class="table-light">
-                    <tr>
-                        <th>Donor</th>
-                        <th>Contact</th>
-                        <th>Item</th>
-                        <th style="width:6rem">Qty</th>
-                        <th style="width:7rem">Status</th>
-                        <th style="width:10rem">Created</th>
-                        <th style="width:10rem">Expires</th>
-                        <th style="width:11rem">Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr th:each="pledge : ${pledges}">
-                        <td th:text="${pledge.donorName}"></td>
-                        <td th:text="${pledge.donorContact}"></td>
-                        <td th:text="${itemNames[pledge.itemId]}"></td>
-                        <td th:text="${pledge.quantity}"></td>
-                        <td>
-                            <span class="badge"
-                                  th:classappend="${pledge.status.name() == 'OPEN'} ? 'bg-primary'
-                                               : (${pledge.status.name() == 'FULFILLED'} ? 'bg-success'
-                                               : (${pledge.status.name() == 'EXPIRED'} ? 'bg-secondary'
-                                               : 'bg-danger'))"
-                                  th:text="${pledge.status}"></span>
-                        </td>
-                        <td th:text="${#temporals.format(pledge.createdAt, 'MM/dd/yy h:mm a')}"></td>
-                        <td th:text="${#temporals.format(pledge.expiresAt, 'MM/dd/yy')}"></td>
-                        <td>
-                            <div th:if="${pledge.status.name() == 'OPEN'}" class="d-flex gap-1">
-                                <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/fulfill'}" method="post">
-                                    <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
-                                    <button type="submit" class="btn btn-success btn-sm">Fulfill</button>
-                                </form>
-                                <form th:action="@{'/admin/pledges/' + ${pledge.id} + '/cancel'}" method="post">
-                                    <input type="hidden" name="pledgeStatus" th:value="${pledgeStatus}">
-                                    <button type="submit" class="btn btn-outline-danger btn-sm">Cancel</button>
-                                </form>
-                            </div>
-                            <span th:unless="${pledge.status.name() == 'OPEN'}"
-                                  th:if="${pledge.fulfilledAt != null}"
-                                  class="text-muted small"
-                                  th:text="${#temporals.format(pledge.fulfilledAt, 'MM/dd/yy')}"></span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </div>
 
-    <!-- Add Category -->
-    <div class="card mb-5">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Add Category</h2>
-        </div>
-        <div class="card-body">
-            <form th:action="@{/admin/categories}" method="post" class="row g-2 align-items-end">
-                <div class="col-auto">
-                    <label class="form-label" for="catName">Name</label>
-                    <input id="catName" type="text" name="name" class="form-control" required>
-                </div>
-                <div class="col-auto">
-                    <button type="submit" class="btn btn-primary">Add Category</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
-    <!-- Add Item -->
-    <div class="card mb-5">
-        <div class="card-header">
-            <h2 class="h5 mb-0">Add Item</h2>
-        </div>
-        <div class="card-body">
-            <form th:action="@{/admin/items}" method="post" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label" for="itemCategory">Category</label>
-                    <select id="itemCategory" name="categoryId" class="form-select" required>
-                        <option value="">-- Select --</option>
-                        <option th:each="cat : ${categories}"
-                                th:value="${cat.id}"
-                                th:text="${cat.name}"></option>
-                    </select>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="itemName">Name</label>
-                    <input id="itemName" type="text" name="name" class="form-control" required>
-                </div>
-                <div class="col-md-4">
-                    <label class="form-label" for="itemUnit">Unit Label</label>
-                    <input id="itemUnit" type="text" name="unitLabel" class="form-control" placeholder="e.g. cans, lbs">
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="itemQty">Initial Quantity</label>
-                    <input id="itemQty" type="number" name="quantity" class="form-control" value="0" min="0" required>
-                </div>
-                <div class="col-md-3">
-                    <label class="form-label" for="itemQuota">Quota</label>
-                    <input id="itemQuota" type="number" name="quota" class="form-control" min="0">
-                </div>
-                <div class="col-12">
-                    <button type="submit" class="btn btn-primary">Add Item</button>
-                </div>
-            </form>
-        </div>
-    </div>
 </main>
 
 <footer th:replace="~{fragments :: footer}"></footer>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65"
-        crossorigin="anonymous"></script>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const form = document.getElementById('admin-form');
         const saveBar = document.getElementById('save-bar');
 
-        // Snapshot original values of every input/select inside the edit form
         const originals = new Map();
         form.querySelectorAll('input[name], select[name]').forEach(el => {
-            originals.set(el, el.value);
+            originals.set(el, el.type === 'checkbox' ? el.checked : el.value);
         });
 
         function checkDirty() {
             let dirty = false;
             originals.forEach((orig, el) => {
-                if (el.value !== orig) dirty = true;
+                if ((el.type === 'checkbox' ? el.checked : el.value) !== orig) dirty = true;
             });
             saveBar.style.display = dirty ? 'block' : 'none';
         }
