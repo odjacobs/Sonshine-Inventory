@@ -29,9 +29,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/").permitAll()
-                        .requestMatchers("/*.css").permitAll()
-                        .requestMatchers("/setup").permitAll()
+                        .requestMatchers("/", "/setup", "/pledge/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .formLogin(Customizer.withDefaults())

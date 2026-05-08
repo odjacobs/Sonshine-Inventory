@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Sonshine Food Pantry - Pledge Confirmation')}"></head>
+<body class="bg-light">
+
+<header th:replace="~{fragments :: header}"></header>
+
+<main class="container pb-4" style="max-width: 720px">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-1">Thanks for your pledge!</h1>
+            <p class="text-muted mb-0">We will reach out if we need any updates.</p>
+        </div>
+        <a class="btn btn-outline-primary" th:href="@{/}">Return to Home</a>
+    </div>
+
+    <div class="card mb-4 shadow-sm">
+        <div class="card-body">
+            <h2 class="h6 text-uppercase text-muted fw-semibold mb-3">Pledge Details</h2>
+            <dl class="row mb-0">
+                <dt class="col-5 col-sm-4 text-muted fw-normal">Item</dt>
+                <dd class="col-7 col-sm-8 fw-semibold mb-2" th:text="${item.name}"></dd>
+
+                <dt class="col-5 col-sm-4 text-muted fw-normal" th:if="${item.unitLabel}">Unit</dt>
+                <dd class="col-7 col-sm-8 mb-2" th:if="${item.unitLabel}" th:text="${item.unitLabel}"></dd>
+
+                <dt class="col-5 col-sm-4 text-muted fw-normal">Quantity Pledged</dt>
+                <dd class="col-7 col-sm-8 mb-2" th:text="${pledge.quantity}"></dd>
+
+                <dt class="col-5 col-sm-4 text-muted fw-normal">Pledge Expires</dt>
+                <dd class="col-7 col-sm-8 mb-2" th:text="${#temporals.format(pledge.expiresAt, 'MMM d, yyyy')}"></dd>
+
+                <dt class="col-5 col-sm-4 text-muted fw-normal" th:if="${need != null}">Remaining Need</dt>
+                <dd class="col-7 col-sm-8 mb-0" th:if="${need != null}" th:text="${need}"></dd>
+            </dl>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 mb-3">
+                <h2 class="h6 text-uppercase text-muted fw-semibold mb-0">Other Top Needs</h2>
+                <a class="btn btn-sm btn-outline-success" th:href="@{/}">View Full Needs List</a>
+            </div>
+
+            <div th:if="${#lists.isEmpty(recommendations)}" class="text-muted">
+                No additional needs at the moment. Thank you for checking!
+            </div>
+
+            <div th:if="${!#lists.isEmpty(recommendations)}" class="list-group">
+                <a class="list-group-item list-group-item-action" th:each="rec : ${recommendations}"
+                   th:href="@{/pledge(itemId=${rec.item.id})}">
+                    <div class="d-flex justify-content-between align-items-center gap-3">
+                        <div>
+                            <div class="fw-semibold" th:text="${rec.item.name}"></div>
+                            <div class="small text-muted">
+                                <span th:if="${rec.item.unitLabel}" th:text="${rec.item.unitLabel + ' · '}"></span>
+                                <span th:text="'Need ' + ${rec.remainingNeed}"></span>
+                            </div>
+                        </div>
+                        <span class="btn btn-primary btn-sm">Pledge</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+
+</body>
+</html>
+

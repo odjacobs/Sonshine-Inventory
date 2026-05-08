@@ -3,6 +3,7 @@ package net.disc0.sonshine_inventory.entities;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Table(name = "pledges")
@@ -17,6 +18,9 @@ public class Pledge {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+
+    @Column(name = "public_id", nullable = false, unique = true)
+    private String publicId;
 
     @Column(name = "item_id", nullable = false)
     private Integer itemId;
@@ -60,6 +64,9 @@ public class Pledge {
         if (createdAt == null) {
             createdAt = LocalDateTime.now();
         }
+        if (publicId == null || publicId.isBlank()) {
+            publicId = UUID.randomUUID().toString();
+        }
     }
 
     public Integer getId() {
@@ -68,6 +75,14 @@ public class Pledge {
 
     public void setId(Integer id) {
         this.id = id;
+    }
+
+    public String getPublicId() {
+        return publicId;
+    }
+
+    public void setPublicId(String publicId) {
+        this.publicId = publicId;
     }
 
     public Integer getItemId() {
