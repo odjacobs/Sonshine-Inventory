@@ -16,7 +16,7 @@ public class Category {
     @Column(name = "active", nullable = false)
     private Boolean active;
 
-    @Column(name = "displayOrder", nullable = false)
+    @Column(name = "display_order", nullable = false)
     private Integer displayOrder;
 
     public Category() {}

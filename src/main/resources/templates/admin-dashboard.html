@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
+<head th:replace="~{fragments :: head('Dashboard - Sonshine Inventory')}"></head>
+<body class="bg-light">
+
+<header th:replace="~{fragments :: header}"></header>
+
+<main class="container pb-5">
+    <div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+        <h1 class="mb-0">Admin Dashboard</h1>
+        <div class="btn-group" role="group" aria-label="Exports">
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/export/inventory.csv}">Export inventory CSV</a>
+            <a class="btn btn-outline-secondary btn-sm" th:href="@{/admin/export/pledges.csv}">Export pledges CSV</a>
+        </div>
+    </div>
+
+    <!-- Stat cards -->
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Total Items</div>
+                    <div class="display-6 fw-semibold" th:text="${totalItems}">0</div>
+                    <div class="text-muted small">active items tracked</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Items Below Quota</div>
+                    <div class="display-6 fw-semibold">
+                        <span th:text="${itemsBelowQuota}">0</span>
+                        <span class="fs-6 text-muted">(<span th:text="${itemsBelowQuotaPercent}">0</span>%)</span>
+                    </div>
+                    <div class="text-muted small">need restocking</div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Open Pledges</div>
+                    <div class="display-6 fw-semibold" th:text="${openPledgesCount}">0</div>
+                    <div class="text-muted small">
+                        <span th:text="${openPledgesCount}">0</span> pledges,
+                        <span th:text="${openPledgesUnits}">0</span> units
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-12 col-sm-6 col-lg-3">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small text-uppercase fw-semibold">Expired Awaiting Review</div>
+                    <div class="display-6 fw-semibold" th:text="${expiredAwaitingReview}">0</div>
+                    <div class="text-muted small">expired pledges to review</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Per-category summary -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-white">
+            <h2 class="h5 mb-0">Per-Category Summary</h2>
+        </div>
+        <div class="card-body">
+            <div th:if="${#lists.isEmpty(categorySummary)}" class="text-muted">
+                No categories yet.
+            </div>
+            <div th:if="${!#lists.isEmpty(categorySummary)}" class="table-responsive">
+                <table class="table table-sm align-middle mb-0">
+                    <thead>
+                    <tr>
+                        <th scope="col">Category</th>
+                        <th scope="col" class="text-end">Stock</th>
+                        <th scope="col" class="text-end">Quota</th>
+                        <th scope="col" class="text-end">Below Quota</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="row : ${categorySummary}">
+                        <td th:text="${row.categoryName}">Category</td>
+                        <td class="text-end" th:text="${row.stockTotal}">0</td>
+                        <td class="text-end" th:text="${row.quotaTotal}">0</td>
+                        <td class="text-end" th:text="${row.belowQuotaCount}">0</td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-primary" th:href="@{/admin}">Go to Admin</a>
+    </div>
+</main>
+
+<footer th:replace="~{fragments :: footer}"></footer>
+<th:block th:replace="~{fragments :: scripts}"></th:block>
+
+</body>
+</html>

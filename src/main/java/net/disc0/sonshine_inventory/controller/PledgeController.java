@@ -72,8 +72,7 @@ public class PledgeController {
     }
 
     private Map<Integer, Integer> buildOpenPledgeTotals() {
-        return pledgeRepository.findAll().stream()
-                .filter(pledge -> pledge.getStatus() == Pledge.PledgeStatus.OPEN)
+        return pledgeRepository.findByStatus(Pledge.PledgeStatus.OPEN).stream()
                 .collect(Collectors.groupingBy(Pledge::getItemId, Collectors.summingInt(Pledge::getQuantity)));
     }
 

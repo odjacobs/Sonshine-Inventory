@@ -43,8 +43,7 @@ public class HomeController {
         Map<Integer, List<Item>> itemsByCategory = items.stream()
                 .collect(Collectors.groupingBy(Item::getCategoryId));
 
-        Map<Integer, Integer> pledgedByItem = pledgeRepository.findAll().stream()
-                .filter(pledge -> pledge.getStatus() == Pledge.PledgeStatus.OPEN)
+        Map<Integer, Integer> pledgedByItem = pledgeRepository.findByStatus(Pledge.PledgeStatus.OPEN).stream()
                 .collect(Collectors.groupingBy(Pledge::getItemId, Collectors.summingInt(Pledge::getQuantity)));
 
         Map<Integer, Integer> remainingByItem = new HashMap<>();

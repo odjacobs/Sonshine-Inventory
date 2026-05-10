@@ -1,5 +1,6 @@
 package net.disc0.sonshine_inventory.controller;
 
+import jakarta.servlet.http.HttpServletResponse;
 import net.disc0.sonshine_inventory.dao.CategoryRepository;
 import net.disc0.sonshine_inventory.dao.ItemRepository;
 import net.disc0.sonshine_inventory.dao.PledgeRepository;
@@ -20,9 +21,13 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import java.io.IOException;
+import java.io.PrintWriter;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -124,7 +129,75 @@ public class AdminController {
         public void setActive(boolean active) { this.active = active; }
     }
 
+    // --- Dashboard view-model ---
+
+    public record CategorySummary(String categoryName,
+                                  int quotaTotal,
+                                  int stockTotal,
+                                  int belowQuotaCount) {}
+
     // --- Endpoints ---
+
+    @GetMapping("/dashboard")
+    public String dashboard(Model model) {
+        List<Item> activeItems = itemRepository.findAll().stream()
+                .filter(it -> Boolean.TRUE.equals(it.getActive()))
+                .toList();
+
+        int totalItems = activeItems.size();
+
+        int itemsBelowQuota = (int) activeItems.stream()
+                .filter(it -> it.getQuota() != null
+                        && (it.getQuantity() == null ? 0 : it.getQuantity()) < it.getQuota())
+                .count();
+
+        int itemsBelowQuotaPercent = totalItems == 0
+                ? 0
+                : (int) Math.round((itemsBelowQuota * 100.0) / totalItems);
+
+        long openPledgesCount = pledgeRepository.countByStatus(Pledge.PledgeStatus.OPEN);
+
+        int openPledgesUnits = pledgeRepository.findByStatus(Pledge.PledgeStatus.OPEN).stream()
+                .mapToInt(p -> p.getQuantity() == null ? 0 : p.getQuantity())
+                .sum();
+
+        long expiredAwaitingReview = pledgeRepository.countByStatus(Pledge.PledgeStatus.EXPIRED);
+
+        List<Category> categories = categoryRepository.findAll().stream()
+                .sorted(Comparator.comparing(Category::getDisplayOrder,
+                        Comparator.nullsLast(Comparator.naturalOrder())))
+                .toList();
+
+        Map<Integer, List<Item>> itemsByCategory = activeItems.stream()
+                .filter(it -> it.getCategoryId() != null)
+                .collect(Collectors.groupingBy(Item::getCategoryId));
+
+        List<CategorySummary> categorySummary = new ArrayList<>();
+        for (Category cat : categories) {
+            List<Item> catItems = itemsByCategory.getOrDefault(cat.getId(), List.of());
+            int quotaTotal = catItems.stream()
+                    .mapToInt(it -> it.getQuota() == null ? 0 : it.getQuota())
+                    .sum();
+            int stockTotal = catItems.stream()
+                    .mapToInt(it -> it.getQuantity() == null ? 0 : it.getQuantity())
+                    .sum();
+            int belowQuotaCount = (int) catItems.stream()
+                    .filter(it -> it.getQuota() != null
+                            && (it.getQuantity() == null ? 0 : it.getQuantity()) < it.getQuota())
+                    .count();
+            categorySummary.add(new CategorySummary(cat.getName(), quotaTotal, stockTotal, belowQuotaCount));
+        }
+
+        model.addAttribute("totalItems", totalItems);
+        model.addAttribute("itemsBelowQuota", itemsBelowQuota);
+        model.addAttribute("itemsBelowQuotaPercent", itemsBelowQuotaPercent);
+        model.addAttribute("openPledgesCount", openPledgesCount);
+        model.addAttribute("openPledgesUnits", openPledgesUnits);
+        model.addAttribute("expiredAwaitingReview", expiredAwaitingReview);
+        model.addAttribute("categorySummary", categorySummary);
+
+        return "admin-dashboard";
+    }
 
     @GetMapping
     public String adminPage(Model model,
@@ -303,5 +376,114 @@ public class AdminController {
         });
 
         return "redirect:/admin/users/register?success";
+    }
+
+    // --- CSV exports ---
+
+    @GetMapping("/export/pledges.csv")
+    public void exportPledgesCsv(HttpServletResponse response) throws IOException {
+        String filename = "pledges-" + LocalDate.now() + ".csv";
+        response.setContentType("text/csv; charset=utf-8");
+        response.setCharacterEncoding("utf-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+        Map<Integer, String> itemNames = itemRepository.findAll().stream()
+                .collect(Collectors.toMap(Item::getId, Item::getName));
+
+        List<Pledge> pledges = pledgeRepository.findAll().stream()
+                .sorted(Comparator.comparing(Pledge::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        PrintWriter writer = response.getWriter();
+        writer.write("id,public_id,item_id,item_name,donor_name,donor_contact,quantity,status,created_at,expires_at,fulfilled_at\r\n");
+        for (Pledge p : pledges) {
+            String itemName = itemNames.getOrDefault(p.getItemId(), "");
+            String row = String.join(",",
+                    csvField(p.getId()),
+                    csvField(p.getPublicId()),
+                    csvField(p.getItemId()),
+                    csvField(itemName),
+                    csvField(p.getDonorName()),
+                    csvField(p.getDonorContact()),
+                    csvField(p.getQuantity()),
+                    csvField(p.getStatus()),
+                    csvField(p.getCreatedAt()),
+                    csvField(p.getExpiresAt()),
+                    csvField(p.getFulfilledAt())
+            );
+            writer.write(row);
+            writer.write("\r\n");
+        }
+        writer.flush();
+    }
+
+    @GetMapping("/export/inventory.csv")
+    public void exportInventoryCsv(HttpServletResponse response) throws IOException {
+        String filename = "inventory-" + LocalDate.now() + ".csv";
+        response.setContentType("text/csv; charset=utf-8");
+        response.setCharacterEncoding("utf-8");
+        response.setHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
+
+        Map<Integer, String> categoryNames = categoryRepository.findAll().stream()
+                .collect(Collectors.toMap(Category::getId, Category::getName));
+
+        Map<Integer, Integer> openPledgedByItem = new HashMap<>();
+        for (Pledge p : pledgeRepository.findByStatus(Pledge.PledgeStatus.OPEN)) {
+            openPledgedByItem.merge(p.getItemId(),
+                    p.getQuantity() == null ? 0 : p.getQuantity(),
+                    Integer::sum);
+        }
+
+        List<Item> items = itemRepository.findAll();
+
+        PrintWriter writer = response.getWriter();
+        writer.write("id,category_id,category_name,name,unit_label,quantity,quota,need,open_pledged,remaining_need,active\r\n");
+        for (Item item : items) {
+            Integer quota = item.getQuota();
+            int quantity = item.getQuantity() == null ? 0 : item.getQuantity();
+            int openPledged = openPledgedByItem.getOrDefault(item.getId(), 0);
+
+            String needStr;
+            String remainingStr;
+            if (quota != null) {
+                int need = Math.max(0, quota - quantity);
+                int remaining = Math.max(0, need - openPledged);
+                needStr = csvField(need);
+                remainingStr = csvField(remaining);
+            } else {
+                needStr = "";
+                remainingStr = "";
+            }
+
+            String catName = item.getCategoryId() == null
+                    ? ""
+                    : categoryNames.getOrDefault(item.getCategoryId(), "");
+
+            String row = String.join(",",
+                    csvField(item.getId()),
+                    csvField(item.getCategoryId()),
+                    csvField(catName),
+                    csvField(item.getName()),
+                    csvField(item.getUnitLabel()),
+                    csvField(item.getQuantity()),
+                    csvField(item.getQuota()),
+                    needStr,
+                    csvField(openPledged),
+                    remainingStr,
+                    csvField(item.getActive())
+            );
+            writer.write(row);
+            writer.write("\r\n");
+        }
+        writer.flush();
+    }
+
+    static String csvField(Object value) {
+        if (value == null) return "";
+        String s = value.toString();
+        boolean needsQuoting = s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r");
+        if (needsQuoting) return "\"" + s.replace("\"", "\"\"") + "\"";
+        return s;
     }
 }

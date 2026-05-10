@@ -88,8 +88,9 @@
 
         <!-- Items -->
         <div id="items" class="card mb-4">
-            <div class="card-header">
+            <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h2 class="h5 mb-0">Items</h2>
+                <a th:href="@{/admin/export/inventory.csv}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
             </div>
             <div class="card-body">
                 <div class="row g-3">
@@ -269,6 +270,7 @@
         <div class="card-header">
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <h2 class="h5 mb-0">Pledges</h2>
+                <a th:href="@{/admin/export/pledges.csv}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
                 <ul class="nav nav-pills nav-sm mb-0 flex-wrap">
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"

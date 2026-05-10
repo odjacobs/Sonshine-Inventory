@@ -53,7 +53,12 @@ The app will be available at `http://localhost:8080`. Flyway applies migrations 
 
 ```bash
 ./mvnw clean package   # produces target/sonshine_inventory-*.war
-./mvnw test            # run tests
+```
+
+### Tests
+
+```bash
+./mvnw test            # run the test suite
 ```
 
 ## Deployment
@@ -67,6 +72,8 @@ required in production:
 | `SERVER_PORT`            | `5000` |
 
 Deploy by uploading the WAR artifact to Elastic Beanstalk via the AWS console or CLI.
+
+EB load-balancer health checks should be pointed at `/actuator/health` (public, no auth required).
 
 ## Design
 

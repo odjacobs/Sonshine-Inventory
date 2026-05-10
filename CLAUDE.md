@@ -43,14 +43,15 @@ Production (AWS Elastic Beanstalk) additionally requires `SPRING_PROFILES_ACTIVE
 
 **Core domain logic (from [DESIGN.md](DESIGN.md)):**
 - `Item.need = MAX(0, quota - currentQuantity)`
-- `Item.remainingNeed = MAX(0, need - SUM(open_pledge_quantities))`
+- `Item.remainingNeed = MAX(0, need - SUM(open_pledge_quantities))` — implemented in `HomeController` and `PledgeController`
 - Pledge status lifecycle: `OPEN → FULFILLED` (admin action, increments `item.currentQuantity`) or `OPEN → EXPIRED` (nightly scheduler at 2 AM, not yet implemented) or `OPEN → CANCELLED`
 - `Pledge.expiresAt = createdAt + 7 days`
 
 **Routes:**
 - `GET /` — public needs list, grouped by category
 - `GET /pledge?itemId={id}` — pledge form for a specific item
-- `POST /pledge/save` — submit a pledge, redirects to home
+- `POST /pledge/save` — submit a pledge, redirects to confirmation
+- `GET /pledge/{publicId}` — pledge confirmation page (UUID-based public id)
 - `GET /setup` — first-time admin setup (redirects to `/login` if any user exists)
 - `POST /setup` — create the first admin account
 - `GET /admin` — admin dashboard (categories, items, pledges, users)
@@ -61,8 +62,9 @@ Production (AWS Elastic Beanstalk) additionally requires `SPRING_PROFILES_ACTIVE
 - `POST /admin/items` — add a new item
 - `GET /admin/users/register` — register a new admin user
 - `POST /admin/users/register` — create a new admin user
+- `GET /actuator/health` — public health endpoint for AWS EB load-balancer checks
 
-**Security:** Spring Security form-based login (default `/login` page), BCrypt password hashing. Users are stored in the `users` table and authorities in the `authorities` table, managed via `JdbcUserDetailsManager`. All admin routes require authentication; `/`, `/pledge`, and `/setup` are public.
+**Security:** Spring Security form-based login (default `/login` page), BCrypt password hashing. Users are stored in the `users` table and authorities in the `authorities` table, managed via `JdbcUserDetailsManager`. All admin routes require authentication; `/`, `/pledge/**`, `/setup`, and `/actuator/health` are public. CSRF protection is enabled (Spring Security default).
 
 **Templates:**
 - `fragments.html` — shared `head`, `header` (responsive navbar with hamburger), `footer`, and `scripts` (Bootstrap JS) fragments
@@ -71,12 +73,14 @@ Production (AWS Elastic Beanstalk) additionally requires `SPRING_PROFILES_ACTIVE
 - `setup.html` — first-time admin account creation (standalone, no navbar)
 - `admin.html` — full admin dashboard with inline-editable categories, items, users tables and pledge management
 - `admin-register.html` — form to register additional admin users
+- `pledge-confirmation.html` — post-submission confirmation page for a pledge
 
 **Flyway migrations:**
 - `V1` — `users` and `authorities` tables
 - `V2` — `categories`, `items`, `pledges` tables
 - `V3` — add `AUTO_INCREMENT` to id columns
 - `V4` — add `display_name` column to `users`
+- `V5` — add `public_id` (UUID) to `pledges`
 
 ## Current State
 
@@ -86,9 +90,10 @@ Functionally complete for v1 core features. What exists:
 - Admin user registration and first-time setup
 - Mobile-responsive UI (Bootstrap 5.3.8)
 
-**Not yet implemented (from DESIGN.md):**
-- Nightly pledge expiration scheduler (`@Scheduled` job at 2 AM)
-- Pledge confirmation page (`GET /pledge/{id}`)
-- `remainingNeed` calculation (subtracting open pledges from displayed need)
+**Not yet implemented / in flight (parallel workstreams on this branch):**
+- Pledge expiration scheduler — Workstream A (in progress in this branch)
+- Admin dashboard at `/admin/dashboard` — Workstream B (queued)
+- CSV export endpoints — Workstream C (in progress in this branch)
+- Test suite expansion — Workstream D (queued)
 
 [DESIGN.md](DESIGN.md) is the authoritative spec for intended behavior.

@@ -29,11 +29,10 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) {
         http
                 .authorizeHttpRequests((authorize) -> authorize
-                        .requestMatchers("/", "/setup", "/pledge/**").permitAll()
+                        .requestMatchers("/", "/setup", "/pledge/**", "/actuator/health").permitAll()
                         .anyRequest().authenticated()
                 )
-                .formLogin(Customizer.withDefaults())
-                .httpBasic(Customizer.withDefaults());
+                .formLogin(Customizer.withDefaults());
         return http.build();
     }
 }
