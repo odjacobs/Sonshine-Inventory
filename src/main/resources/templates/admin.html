@@ -16,12 +16,15 @@
             <div class="card-header">
                 <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <h2 class="h5 mb-0">Categories</h2>
-                    <span class="text-muted small">Drag to reorder on desktop, or use Up/Down.</span>
+                    <div class="d-flex gap-2 align-items-center">
+                        <button type="button" id="toggle-inactive-categories-btn" class="btn btn-sm btn-outline-secondary">Show inactive</button>
+                        <span class="text-muted small">Drag to reorder on desktop, or use Up/Down.</span>
+                    </div>
                 </div>
             </div>
             <div class="card-body">
                 <div class="row g-3 category-list">
-                    <div class="col-12 category-card" th:each="cat, stat : ${categories}" draggable="true">
+                    <div class="col-12 category-card" th:each="cat, stat : ${categories}" draggable="true" th:classappend="${!cat.active} ? 'category-inactive'">
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
                                 <input type="hidden"
@@ -90,11 +93,14 @@
         <div id="items" class="card mb-4">
             <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
                 <h2 class="h5 mb-0">Items</h2>
-                <a th:href="@{/admin/export/inventory.csv}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
+                <div class="d-flex gap-2 align-items-center">
+                    <button type="button" id="toggle-inactive-btn" class="btn btn-sm btn-outline-secondary">Show inactive</button>
+                    <a th:href="@{/admin/export/inventory.csv}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
+                </div>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-12" th:each="item, stat : ${items}">
+                <div class="row g-3" id="items-list">
+                    <div class="col-12 item-row" th:each="item, stat : ${items}" th:classappend="${!item.active} ? 'item-inactive'">
                         <div class="card border-0 shadow-sm">
                             <div class="card-body">
                                 <input type="hidden"
@@ -271,36 +277,36 @@
             <div class="d-flex justify-content-between align-items-start flex-wrap gap-2">
                 <h2 class="h5 mb-0">Pledges</h2>
                 <a th:href="@{/admin/export/pledges.csv}" class="btn btn-sm btn-outline-secondary">Export CSV</a>
-                <ul class="nav nav-pills nav-sm mb-0 flex-wrap">
+                <ul class="nav nav-pills nav-sm mb-0 flex-wrap" id="pledges-filter-nav">
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"
                            th:classappend="${pledgeStatus == 'OPEN'} ? 'active'"
-                           th:href="@{/admin(pledgeStatus='OPEN')}">Open</a>
+                           href="#" data-status="OPEN">Open</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"
                            th:classappend="${pledgeStatus == 'FULFILLED'} ? 'active'"
-                           th:href="@{/admin(pledgeStatus='FULFILLED')}">Fulfilled</a>
+                           href="#" data-status="FULFILLED">Fulfilled</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"
                            th:classappend="${pledgeStatus == 'EXPIRED'} ? 'active'"
-                           th:href="@{/admin(pledgeStatus='EXPIRED')}">Expired</a>
+                           href="#" data-status="EXPIRED">Expired</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"
                            th:classappend="${pledgeStatus == 'CANCELLED'} ? 'active'"
-                           th:href="@{/admin(pledgeStatus='CANCELLED')}">Cancelled</a>
+                           href="#" data-status="CANCELLED">Cancelled</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link py-1 px-2"
                            th:classappend="${pledgeStatus == 'ALL'} ? 'active'"
-                           th:href="@{/admin(pledgeStatus='ALL')}">All</a>
+                           href="#" data-status="ALL">All</a>
                     </li>
                 </ul>
             </div>
         </div>
-        <div class="card-body">
+        <div class="card-body" th:fragment="pledgesCardBody">
             <div th:if="${#lists.isEmpty(pledges)}" class="text-muted fst-italic">
                 No pledges found for this status.
             </div>
@@ -492,6 +498,67 @@
 <!--                }-->
 <!--            });-->
 <!--        </script>-->
+
+<script>
+    // --- Feature 1: AJAX pledge status filter ---
+    document.addEventListener('DOMContentLoaded', () => {
+        const filterNav = document.getElementById('pledges-filter-nav');
+        const pledgesCard = document.getElementById('pledges');
+        if (!filterNav || !pledgesCard) return;
+
+        filterNav.addEventListener('click', (event) => {
+            const link = event.target.closest('a[data-status]');
+            if (!link) return;
+            event.preventDefault();
+
+            const status = link.dataset.status;
+
+            // Update active pill immediately for responsiveness
+            filterNav.querySelectorAll('a[data-status]').forEach(a => a.classList.remove('active'));
+            link.classList.add('active');
+
+            fetch('/admin/pledges/fragment?pledgeStatus=' + encodeURIComponent(status), {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            })
+            .then(response => {
+                if (!response.ok) throw new Error('Filter request failed: ' + response.status);
+                return response.text();
+            })
+            .then(html => {
+                const cardBody = pledgesCard.querySelector('.card-body');
+                if (cardBody) cardBody.outerHTML = html;
+            })
+            .catch(err => console.error('Pledge filter error:', err));
+        });
+    });
+
+    // --- Inactive toggle factory ---
+    function initInactiveToggle(btnId, listId, inactiveClass) {
+        const toggleBtn = document.getElementById(btnId);
+        const list = document.getElementById(listId);
+        if (!toggleBtn || !list) return;
+
+        const hasInactive = list.querySelector('.' + inactiveClass);
+        if (!hasInactive) { toggleBtn.style.display = 'none'; return; }
+
+        let showing = false;
+
+        function apply() {
+            list.querySelectorAll('.' + inactiveClass).forEach(row => {
+                row.style.display = showing ? '' : 'none';
+            });
+            toggleBtn.textContent = showing ? 'Hide inactive' : 'Show inactive';
+        }
+
+        apply();
+        toggleBtn.addEventListener('click', () => { showing = !showing; apply(); });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initInactiveToggle('toggle-inactive-categories-btn', 'categories', 'category-inactive');
+        initInactiveToggle('toggle-inactive-btn', 'items-list', 'item-inactive');
+    });
+</script>
 
 </body>
 </html>

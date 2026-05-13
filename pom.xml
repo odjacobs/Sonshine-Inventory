@@ -10,13 +10,16 @@
     </parent>
     <groupId>net.disc0</groupId>
     <artifactId>Sonshine_Inventory</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
     <name>Sonshine_Inventory</name>
     <description>Sonshine_Inventory</description>
     <url/>
     <licenses>
-        <license/>
+        <license>
+            <name>GNU General Public License v3.0</name>
+            <url>https://www.gnu.org/licenses/gpl-3.0.txt</url>
+        </license>
     </licenses>
     <developers>
         <developer/>
@@ -121,6 +124,13 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>build-info</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>

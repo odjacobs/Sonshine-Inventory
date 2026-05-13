@@ -43,7 +43,9 @@
 <footer th:fragment="footer">
     <footer class="bg-light border-top mt-5 py-3">
         <div class="container text-muted small text-center">
-            &copy; Owen Jacobs 2026
+            &copy; Owen Jacobs 2026 &mdash; v<span th:text="${appVersion}"></span>
+            &mdash; <a href="https://github.com/odjacobs/Sonshine-Inventory/blob/main/LICENSE"
+                       class="text-muted" target="_blank" rel="noopener">GPL v3</a>
         </div>
     </footer>
 </footer>
