@@ -252,4 +252,98 @@ class AdminControllerTest {
         assertTrue(statusCode == 401 || statusCode == 302,
                 "expected 401 or 302, got: " + statusCode);
     }
+
+    // --- Fragment endpoint tests ---
+
+    @Test
+    @WithMockUser
+    void pledgesFragmentDefaultStatusIsOpen() throws Exception {
+        when(itemRepository.findAll()).thenReturn(new ArrayList<>(List.of(
+                item(10, 1, "Beans", 5, 20)
+        )));
+        when(pledgeRepository.findAll()).thenReturn(new ArrayList<>(List.of(
+                pledge(100, 10, 3, Pledge.PledgeStatus.OPEN),
+                pledge(101, 10, 2, Pledge.PledgeStatus.FULFILLED)
+        )));
+
+        MvcResult result = mockMvc.perform(get("/admin/pledges/fragment"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("pledgeStatus", "OPEN"))
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Pledge> pledges = (List<Pledge>) result.getModelAndView().getModel().get("pledges");
+        assertEquals(1, pledges.size());
+        assertEquals(Pledge.PledgeStatus.OPEN, pledges.get(0).getStatus());
+    }
+
+    @Test
+    @WithMockUser
+    void pledgesFragmentAllStatusReturnsEverything() throws Exception {
+        when(itemRepository.findAll()).thenReturn(new ArrayList<>());
+        when(pledgeRepository.findAll()).thenReturn(new ArrayList<>(List.of(
+                pledge(100, 10, 3, Pledge.PledgeStatus.OPEN),
+                pledge(101, 10, 2, Pledge.PledgeStatus.FULFILLED),
+                pledge(102, 10, 1, Pledge.PledgeStatus.CANCELLED)
+        )));
+
+        MvcResult result = mockMvc.perform(get("/admin/pledges/fragment").param("pledgeStatus", "ALL"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("pledgeStatus", "ALL"))
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Pledge> pledges = (List<Pledge>) result.getModelAndView().getModel().get("pledges");
+        assertEquals(3, pledges.size());
+    }
+
+    @Test
+    @WithMockUser
+    void pledgesFragmentFiltersToRequestedStatus() throws Exception {
+        when(itemRepository.findAll()).thenReturn(new ArrayList<>());
+        when(pledgeRepository.findAll()).thenReturn(new ArrayList<>(List.of(
+                pledge(100, 10, 3, Pledge.PledgeStatus.OPEN),
+                pledge(101, 10, 2, Pledge.PledgeStatus.FULFILLED),
+                pledge(102, 10, 1, Pledge.PledgeStatus.EXPIRED)
+        )));
+
+        MvcResult result = mockMvc.perform(get("/admin/pledges/fragment").param("pledgeStatus", "FULFILLED"))
+                .andExpect(status().isOk())
+                .andExpect(model().attribute("pledgeStatus", "FULFILLED"))
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        List<Pledge> pledges = (List<Pledge>) result.getModelAndView().getModel().get("pledges");
+        assertEquals(1, pledges.size());
+        assertEquals(Pledge.PledgeStatus.FULFILLED, pledges.get(0).getStatus());
+    }
+
+    @Test
+    @WithMockUser
+    void pledgesFragmentExposesItemNamesInModel() throws Exception {
+        when(itemRepository.findAll()).thenReturn(new ArrayList<>(List.of(
+                item(10, 1, "Beans", 5, 20),
+                item(11, 1, "Rice", 3, 10)
+        )));
+        when(pledgeRepository.findAll()).thenReturn(new ArrayList<>());
+
+        MvcResult result = mockMvc.perform(get("/admin/pledges/fragment"))
+                .andExpect(status().isOk())
+                .andReturn();
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<Integer, String> itemNames =
+                (java.util.Map<Integer, String>) result.getModelAndView().getModel().get("itemNames");
+        assertNotNull(itemNames);
+        assertEquals("Beans", itemNames.get(10));
+        assertEquals("Rice", itemNames.get(11));
+    }
+
+    @Test
+    void anonymousAccessToPledgesFragmentIsBlocked() throws Exception {
+        int statusCode = mockMvc.perform(get("/admin/pledges/fragment"))
+                .andReturn().getResponse().getStatus();
+        assertTrue(statusCode == 401 || statusCode == 302,
+                "expected 401 or 302, got: " + statusCode);
+    }
 }

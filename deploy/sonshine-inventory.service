@@ -1,0 +1,20 @@
+[Unit]
+Description=Sonshine Room Inventory
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+Type=simple
+User=sonshine
+Group=sonshine
+WorkingDirectory=/opt/sonshine-inventory
+ExecStart=/usr/bin/java -jar /opt/sonshine-inventory/sonshine-inventory.jar
+EnvironmentFile=/etc/sonshine/env
+Restart=on-failure
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=sonshine-inventory
+
+[Install]
+WantedBy=multi-user.target

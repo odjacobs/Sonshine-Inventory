@@ -219,7 +219,7 @@ public class AdminController {
         if ("ALL".equals(pledgeStatus)) {
             pledges = pledgeRepository.findAll();
         } else {
-            Pledge.PledgeStatus status = Pledge.PledgeStatus.valueOf(pledgeStatus);
+            Pledge.PledgeStatus status = parsePledgeStatus(pledgeStatus);
             pledges = pledgeRepository.findAll().stream()
                     .filter(p -> p.getStatus() == status)
                     .toList();
@@ -328,6 +328,32 @@ public class AdminController {
                           @RequestParam(required = false) Integer quota) {
         itemRepository.save(new Item(categoryId, name, unitLabel, quantity, quota, true));
         return "redirect:/admin";
+    }
+
+    @GetMapping("/pledges/fragment")
+    public String pledgesFragment(Model model,
+                                  @RequestParam(required = false, defaultValue = "OPEN") String pledgeStatus) {
+        Map<Integer, String> itemNames = itemRepository.findAll().stream()
+                .collect(Collectors.toMap(Item::getId, Item::getName));
+
+        List<Pledge> pledges;
+        if ("ALL".equals(pledgeStatus)) {
+            pledges = pledgeRepository.findAll();
+        } else {
+            Pledge.PledgeStatus status = parsePledgeStatus(pledgeStatus);
+            pledges = pledgeRepository.findAll().stream()
+                    .filter(p -> p.getStatus() == status)
+                    .toList();
+        }
+        pledges = pledges.stream()
+                .sorted(Comparator.comparing(Pledge::getCreatedAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())))
+                .toList();
+
+        model.addAttribute("itemNames", itemNames);
+        model.addAttribute("pledges", pledges);
+        model.addAttribute("pledgeStatus", pledgeStatus);
+        return "admin :: pledgesCardBody";
     }
 
     @GetMapping("/users/register")
@@ -485,5 +511,13 @@ public class AdminController {
         boolean needsQuoting = s.contains(",") || s.contains("\"") || s.contains("\n") || s.contains("\r");
         if (needsQuoting) return "\"" + s.replace("\"", "\"\"") + "\"";
         return s;
+    }
+
+    private Pledge.PledgeStatus parsePledgeStatus(String value) {
+        try {
+            return Pledge.PledgeStatus.valueOf(value);
+        } catch (IllegalArgumentException e) {
+            return Pledge.PledgeStatus.OPEN;
+        }
     }
 }
