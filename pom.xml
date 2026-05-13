@@ -10,8 +10,8 @@
     </parent>
     <groupId>net.disc0</groupId>
     <artifactId>Sonshine_Inventory</artifactId>
-    <version>0.0.1-SNAPSHOT</version>
-    <packaging>war</packaging>
+    <version>1.1.0</version>
+    <packaging>jar</packaging>
     <name>Sonshine_Inventory</name>
     <description>Sonshine_Inventory</description>
     <url/>
